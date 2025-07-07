@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { TransactionList } from './components/TransactionList';
 import { ReconciliationForm } from './components/ReconciliationForm';
 import { ApprovalQueue } from './components/ApprovalQueue';
-import { FileUploadManager } from './components/FileUploadManager';
+import FileUploadManager from './components/FileUploadManager';
 import { IndividualTransactionForm } from './components/IndividualTransactionForm';
 import { useReconciliation } from './hooks/useReconciliation';
 import { Transaction } from './types';

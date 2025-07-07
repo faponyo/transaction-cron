@@ -11,7 +11,7 @@ interface FileUploadManagerProps {
   userRole: string;
 }
 
-export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
+const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   fileUploads,
   onFileUpload,
   onApproveFile,
@@ -915,3 +915,5 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (..
     timeout = setTimeout(() => func(...args), wait);
   };
 }
+
+export default FileUploadManager;
