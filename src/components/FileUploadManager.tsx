@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FileUpload, Transaction } from '../types';
-import { Upload, FileText, Check, X, AlertCircle, Download, ArrowUpRight, ArrowDownRight, Eye, EyeOff, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, Check, X, AlertCircle, Download, ArrowUpRight, ArrowDownRight, Eye, EyeOff, MessageCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface FileUploadManagerProps {
   fileUploads: FileUpload[];
@@ -23,6 +23,29 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   const [showTransactions, setShowTransactions] = useState<string | null>(null);
   const [approvalComments, setApprovalComments] = useState<{ [key: string]: string }>({});
   const [rejectionReasons, setRejectionReasons] = useState<{ [key: string]: string }>({});
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending_approval' | 'approved' | 'rejected'>('all');
+
+  // Filter and paginate files
+  const filteredFiles = useMemo(() => {
+    if (statusFilter === 'all') {
+      return fileUploads;
+    }
+    return fileUploads.filter(file => file.status === statusFilter);
+  }, [fileUploads, statusFilter]);
+
+  const totalPages = Math.ceil(filteredFiles.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentFiles = filteredFiles.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, pageSize]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -120,6 +143,13 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
 
   const updateRejectionReason = (fileId: string, reason: string) => {
     setRejectionReasons(prev => ({ ...prev, [fileId]: reason }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Close any open details when changing pages
+    setSelectedFile(null);
+    setShowTransactions(null);
   };
 
   const canUpload = userRole === 'maker' || userRole === 'admin';
@@ -223,6 +253,67 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     </div>
   );
 
+  const PaginationControls: React.FC = () => {
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        const start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, start + maxVisiblePages - 1);
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
+        }
+      }
+      
+      return pages;
+    };
+
+    if (totalPages <= 1) return null;
+
+    return (
+      <nav aria-label="File pagination">
+        <ul className="pagination pagination-sm justify-content-center mb-0">
+          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <button
+              className="page-link"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </li>
+          
+          {getPageNumbers().map(page => (
+            <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+              <button
+                className="page-link"
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </button>
+            </li>
+          ))}
+          
+          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+            <button
+              className="page-link"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </li>
+        </ul>
+      </nav>
+    );
+  };
+
   return (
     <div className="container-fluid">
       {/* File Upload Section */}
@@ -306,201 +397,260 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
       {/* File Approval Queue */}
       <div className="card">
         <div className="card-header bg-white">
-          <h5 className="card-title mb-1">File Approval Queue</h5>
-          <p className="card-text small text-muted mb-0">
-            {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} pending approval
-          </p>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="card-title mb-1">File Approval Queue</h5>
+              <p className="card-text small text-muted mb-0">
+                {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} pending approval
+              </p>
+            </div>
+            
+            {/* Filters and Controls */}
+            <div className="d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="statusFilter" className="form-label small mb-0">Status:</label>
+                <select
+                  id="statusFilter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="form-select form-select-sm"
+                  style={{ width: 'auto' }}
+                >
+                  <option value="all">All</option>
+                  <option value="pending_approval">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+              
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="pageSize" className="form-label small mb-0">Show:</label>
+                <select
+                  id="pageSize"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="form-select form-select-sm"
+                  style={{ width: 'auto' }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="card-body p-0">
-          {fileUploads.length === 0 ? (
+          {filteredFiles.length === 0 ? (
             <div className="text-center py-5">
               <FileText className="text-muted mb-3" size={48} />
-              <h5 className="mb-2">No Files Uploaded</h5>
-              <p className="text-muted">Upload Excel files to begin the reconciliation process.</p>
+              <h5 className="mb-2">
+                {statusFilter === 'all' ? 'No Files Uploaded' : `No ${statusFilter.replace('_', ' ')} Files`}
+              </h5>
+              <p className="text-muted">
+                {statusFilter === 'all' 
+                  ? 'Upload Excel files to begin the reconciliation process.' 
+                  : `No files with ${statusFilter.replace('_', ' ')} status found.`}
+              </p>
             </div>
           ) : (
-            <div className="list-group list-group-flush">
-              {fileUploads.map((file) => {
-                const isSelected = selectedFile === file.id;
-                const showingTransactions = showTransactions === file.id;
-                
-                return (
-                  <div key={file.id} className="list-group-item">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <div className={`p-2 rounded-circle me-3 ${
-                          file.source === 'bank' ? 'bg-primary bg-opacity-10' : 'bg-success bg-opacity-10'
-                        }`}>
-                          <FileText className={`${
-                            file.source === 'bank' ? 'text-primary' : 'text-success'
-                          }`} size={20} />
+            <>
+              <div className="list-group list-group-flush">
+                {currentFiles.map((file) => {
+                  const isSelected = selectedFile === file.id;
+                  const showingTransactions = showTransactions === file.id;
+                  
+                  return (
+                    <div key={file.id} className="list-group-item">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="d-flex align-items-center">
+                          <div className={`p-2 rounded-circle me-3 ${
+                            file.source === 'bank' ? 'bg-primary bg-opacity-10' : 'bg-success bg-opacity-10'
+                          }`}>
+                            <FileText className={`${
+                              file.source === 'bank' ? 'text-primary' : 'text-success'
+                            }`} size={20} />
+                          </div>
+                          <div>
+                            <h6 className="mb-1 fw-medium">{file.fileName}</h6>
+                            <p className="mb-0 small text-muted">
+                              {file.transactionCount} transactions • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h6 className="mb-1 fw-medium">{file.fileName}</h6>
-                          <p className="mb-0 small text-muted">
-                            {file.transactionCount} transactions • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center gap-2">
-                        <StatusBadge status={file.status} />
-                        <button
-                          onClick={() => handleDownloadFile(file)}
-                          className="btn btn-outline-success btn-sm d-flex align-items-center"
-                          title="Download file"
-                        >
-                          <Download className="me-1" size={14} />
-                          Download
-                        </button>
-                        <button
-                          onClick={() => setShowTransactions(showingTransactions ? null : file.id)}
-                          className="btn btn-outline-primary btn-sm d-flex align-items-center"
-                        >
-                          {showingTransactions ? (
-                            <>
-                              <EyeOff className="me-1" size={14} />
-                              Hide
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="me-1" size={14} />
-                              View
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => setSelectedFile(isSelected ? null : file.id)}
-                          className="btn btn-outline-secondary btn-sm"
-                        >
-                          {isSelected ? 'Hide Details' : 'Details'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Approval/Rejection Remarks Display */}
-                    {(file.status === 'approved' || file.status === 'rejected') && (
-                      <div className={`alert ${
-                        file.status === 'approved' ? 'alert-success' : 'alert-danger'
-                      } mb-3`}>
-                        <div className="d-flex align-items-start">
-                          {file.status === 'approved' ? (
-                            <CheckCircle className="me-2 mt-1" size={20} />
-                          ) : (
-                            <XCircle className="me-2 mt-1" size={20} />
-                          )}
-                          <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                              <h6 className="mb-0">
-                                {file.status === 'approved' ? 'File Approved' : 'File Rejected'}
-                              </h6>
-                              <small className="text-muted">
-                                {file.approvedBy} • {file.approvedAt && new Date(file.approvedAt).toLocaleString()}
-                              </small>
-                            </div>
-                            {file.rejectionReason && (
-                              <div className="alert alert-light border mb-0">
-                                <strong>Reason:</strong> {file.rejectionReason}
-                              </div>
+                        <div className="d-flex align-items-center gap-2">
+                          <StatusBadge status={file.status} />
+                          <button
+                            onClick={() => handleDownloadFile(file)}
+                            className="btn btn-outline-success btn-sm d-flex align-items-center"
+                            title="Download file"
+                          >
+                            <Download className="me-1" size={14} />
+                            Download
+                          </button>
+                          <button
+                            onClick={() => setShowTransactions(showingTransactions ? null : file.id)}
+                            className="btn btn-outline-primary btn-sm d-flex align-items-center"
+                          >
+                            {showingTransactions ? (
+                              <>
+                                <EyeOff className="me-1" size={14} />
+                                Hide
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="me-1" size={14} />
+                                View
+                              </>
                             )}
-                          </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedFile(isSelected ? null : file.id)}
+                            className="btn btn-outline-secondary btn-sm"
+                          >
+                            {isSelected ? 'Hide Details' : 'Details'}
+                          </button>
                         </div>
                       </div>
-                    )}
 
-                    {showingTransactions && (
-                      <div className="mb-3">
-                        <h6 className="fw-medium mb-2">
-                          Transaction Details ({file.transactionCount} transactions)
-                        </h6>
-                        <TransactionTable transactions={file.transactions} />
-                      </div>
-                    )}
+                      {/* Approval/Rejection Remarks Display */}
+                      {(file.status === 'approved' || file.status === 'rejected') && (
+                        <div className={`alert ${
+                          file.status === 'approved' ? 'alert-success' : 'alert-danger'
+                        } mb-3`}>
+                          <div className="d-flex align-items-start">
+                            {file.status === 'approved' ? (
+                              <CheckCircle className="me-2 mt-1" size={20} />
+                            ) : (
+                              <XCircle className="me-2 mt-1" size={20} />
+                            )}
+                            <div className="flex-grow-1">
+                              <div className="d-flex justify-content-between align-items-center mb-2">
+                                <h6 className="mb-0">
+                                  {file.status === 'approved' ? 'File Approved' : 'File Rejected'}
+                                </h6>
+                                <small className="text-muted">
+                                  {file.approvedBy} • {file.approvedAt && new Date(file.approvedAt).toLocaleString()}
+                                </small>
+                              </div>
+                              {file.rejectionReason && (
+                                <div className="alert alert-light border mb-0">
+                                  <strong>Reason:</strong> {file.rejectionReason}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                    {isSelected && (
-                      <div className="mt-3">
-                        <div className="row g-3 mb-4">
-                          <div className="col-md-4">
-                            <div className="p-3 bg-light rounded">
-                              <h6 className="fw-medium mb-2">File Details</h6>
-                              <div className="small">
-                                <p className="mb-1"><span className="fw-medium">Source:</span> {file.source === 'bank' ? 'Bank' : 'System'}</p>
-                                <p className="mb-1"><span className="fw-medium">Transactions:</span> {file.transactionCount}</p>
-                                <p className="mb-0"><span className="fw-medium">Uploaded:</span> {new Date(file.uploadedAt).toLocaleString()}</p>
+                      {showingTransactions && (
+                        <div className="mb-3">
+                          <h6 className="fw-medium mb-2">
+                            Transaction Details ({file.transactionCount} transactions)
+                          </h6>
+                          <TransactionTable transactions={file.transactions} />
+                        </div>
+                      )}
+
+                      {isSelected && (
+                        <div className="mt-3">
+                          <div className="row g-3 mb-4">
+                            <div className="col-md-4">
+                              <div className="p-3 bg-light rounded">
+                                <h6 className="fw-medium mb-2">File Details</h6>
+                                <div className="small">
+                                  <p className="mb-1"><span className="fw-medium">Source:</span> {file.source === 'bank' ? 'Bank' : 'System'}</p>
+                                  <p className="mb-1"><span className="fw-medium">Transactions:</span> {file.transactionCount}</p>
+                                  <p className="mb-0"><span className="fw-medium">Uploaded:</span> {new Date(file.uploadedAt).toLocaleString()}</p>
+                                </div>
                               </div>
                             </div>
                           </div>
+
+                          {/* Approval Form - Always show for pending files when user can approve */}
+                          {file.status === 'pending_approval' && canApprove && (
+                            <div className="border-top pt-4 bg-light p-3 rounded">
+                              <h6 className="mb-3">File Approval</h6>
+                              
+                              <div className="mb-3">
+                                <label htmlFor={`approval-comments-${file.id}`} className="form-label fw-medium">
+                                  Approval Comments (Optional)
+                                </label>
+                                <textarea
+                                  id={`approval-comments-${file.id}`}
+                                  value={approvalComments[file.id] || ''}
+                                  onChange={(e) => updateApprovalComments(file.id, e.target.value)}
+                                  rows={3}
+                                  className="form-control"
+                                  placeholder="Add any comments for this approval..."
+                                />
+                              </div>
+
+                              <div className="mb-3">
+                                <label htmlFor={`rejection-reason-${file.id}`} className="form-label fw-medium">
+                                  Rejection Reason (Required if rejecting)
+                                </label>
+                                <textarea
+                                  id={`rejection-reason-${file.id}`}
+                                  value={rejectionReasons[file.id] || ''}
+                                  onChange={(e) => updateRejectionReason(file.id, e.target.value)}
+                                  rows={3}
+                                  className="form-control"
+                                  placeholder="Provide detailed reason for rejection..."
+                                />
+                              </div>
+
+                              <div className="d-flex justify-content-end gap-2">
+                                <button
+                                  onClick={() => handleReject(file.id)}
+                                  disabled={!rejectionReasons[file.id]?.trim()}
+                                  className="btn btn-danger d-flex align-items-center"
+                                >
+                                  <X className="me-1" size={16} />
+                                  Reject File
+                                </button>
+                                <button
+                                  onClick={() => handleApprove(file.id)}
+                                  className="btn btn-success d-flex align-items-center"
+                                >
+                                  <Check className="me-1" size={16} />
+                                  Approve File
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {file.status === 'pending_approval' && !canApprove && (
+                            <div className="alert alert-warning">
+                              <div className="d-flex align-items-center">
+                                <AlertCircle className="me-2" size={20} />
+                                <p className="mb-0">
+                                  You need checker or admin role to approve file uploads.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-
-                        {/* Approval Form - Always show for pending files when user can approve */}
-                        {file.status === 'pending_approval' && canApprove && (
-                          <div className="border-top pt-4 bg-light p-3 rounded">
-                            <h6 className="mb-3">File Approval</h6>
-                            
-                            <div className="mb-3">
-                              <label htmlFor={`approval-comments-${file.id}`} className="form-label fw-medium">
-                                Approval Comments (Optional)
-                              </label>
-                              <textarea
-                                id={`approval-comments-${file.id}`}
-                                value={approvalComments[file.id] || ''}
-                                onChange={(e) => updateApprovalComments(file.id, e.target.value)}
-                                rows={3}
-                                className="form-control"
-                                placeholder="Add any comments for this approval..."
-                              />
-                            </div>
-
-                            <div className="mb-3">
-                              <label htmlFor={`rejection-reason-${file.id}`} className="form-label fw-medium">
-                                Rejection Reason (Required if rejecting)
-                              </label>
-                              <textarea
-                                id={`rejection-reason-${file.id}`}
-                                value={rejectionReasons[file.id] || ''}
-                                onChange={(e) => updateRejectionReason(file.id, e.target.value)}
-                                rows={3}
-                                className="form-control"
-                                placeholder="Provide detailed reason for rejection..."
-                              />
-                            </div>
-
-                            <div className="d-flex justify-content-end gap-2">
-                              <button
-                                onClick={() => handleReject(file.id)}
-                                disabled={!rejectionReasons[file.id]?.trim()}
-                                className="btn btn-danger d-flex align-items-center"
-                              >
-                                <X className="me-1" size={16} />
-                                Reject File
-                              </button>
-                              <button
-                                onClick={() => handleApprove(file.id)}
-                                className="btn btn-success d-flex align-items-center"
-                              >
-                                <Check className="me-1" size={16} />
-                                Approve File
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {file.status === 'pending_approval' && !canApprove && (
-                          <div className="alert alert-warning">
-                            <div className="d-flex align-items-center">
-                              <AlertCircle className="me-2" size={20} />
-                              <p className="mb-0">
-                                You need checker or admin role to approve file uploads.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Pagination Footer */}
+              {totalPages > 1 && (
+                <div className="card-footer bg-white border-top">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="text-muted small">
+                      Showing {startIndex + 1} to {Math.min(endIndex, filteredFiles.length)} of {filteredFiles.length} files
+                    </div>
+                    <PaginationControls />
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
