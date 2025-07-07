@@ -21,206 +21,199 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const unreconciled = bankTransactions.filter(t => t.status === 'unreconciled').length;
   const totalTransactions = bankTransactions.length + systemTransactions.length;
   const pendingFiles = fileUploads.filter(file => file.status === 'pending_approval').length;
-  const approvedFiles = fileUploads.filter(file => file.status === 'approved').length;
-  const rejectedFiles = fileUploads.filter(file => file.status === 'rejected').length;
 
   const stats = [
     {
       title: 'Pending Reconciliations',
       value: pendingApproval,
       icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200'
+      color: 'text-warning',
+      bgColor: 'bg-warning',
+      bgLight: 'bg-warning-subtle'
     },
     {
       title: 'Approved Reconciliations',
       value: approved,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
+      color: 'text-success',
+      bgColor: 'bg-success',
+      bgLight: 'bg-success-subtle'
     },
     {
       title: 'Rejected Reconciliations',
       value: rejected,
       icon: XCircle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200'
+      color: 'text-danger',
+      bgColor: 'bg-danger',
+      bgLight: 'bg-danger-subtle'
     },
     {
       title: 'Unreconciled Transactions',
       value: unreconciled,
       icon: AlertCircle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200'
+      color: 'text-warning',
+      bgColor: 'bg-warning',
+      bgLight: 'bg-warning-subtle'
     },
     {
       title: 'Total Transactions',
       value: totalTransactions,
       icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200'
+      color: 'text-primary',
+      bgColor: 'bg-primary',
+      bgLight: 'bg-primary-subtle'
     },
     {
       title: 'Pending File Approvals',
       value: pendingFiles,
       icon: Upload,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200'
+      color: 'text-info',
+      bgColor: 'bg-info',
+      bgLight: 'bg-info-subtle'
     }
   ];
 
-  const getStatusIcon = (status: string) => {
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'approved':
-        return CheckCircle;
+        return 'badge bg-success';
       case 'rejected':
-        return XCircle;
+        return 'badge bg-danger';
       case 'pending_approval':
-        return Clock;
+        return 'badge bg-warning text-dark';
       default:
-        return AlertCircle;
+        return 'badge bg-secondary';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusIndicatorClass = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'rejected':
-        return 'bg-red-500';
+        return 'bg-danger';
       case 'pending_approval':
-        return 'bg-yellow-500';
+        return 'bg-warning';
       default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'pending_approval':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-secondary';
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="container-fluid">
+      <div className="row g-4 mb-4">
         {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className={`${stat.bgColor} ${stat.borderColor} border rounded-lg p-6 transition-all hover:shadow-md`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+          <div key={stat.title} className="col-md-6 col-lg-4">
+            <div className={`card h-100 border-0 ${stat.bgLight}`}>
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p className="card-text small text-muted mb-1">{stat.title}</p>
+                    <h3 className="card-title mb-0 fw-bold">{stat.value}</h3>
+                  </div>
+                  <div className={`p-3 rounded-circle ${stat.bgColor} bg-opacity-10`}>
+                    <stat.icon className={stat.color} size={24} />
+                  </div>
+                </div>
               </div>
-              <stat.icon className={`h-8 w-8 ${stat.color}`} />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="row g-4">
         {/* Recent Reconciliation Activity */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Reconciliation Activity</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {reconciliationEntries.slice(0, 5).map((entry) => {
-                const StatusIcon = getStatusIcon(entry.status);
-                return (
-                  <div key={entry.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(entry.status)}`} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
+        <div className="col-lg-6">
+          <div className="card h-100">
+            <div className="card-header bg-white">
+              <h5 className="card-title mb-0">Recent Reconciliation Activity</h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex flex-column gap-3">
+                {reconciliationEntries.slice(0, 5).map((entry) => (
+                  <div key={entry.id} className="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                    <div className="d-flex align-items-center">
+                      <div className={`rounded-circle me-3`} style={{ width: '12px', height: '12px' }}>
+                        <div className={`w-100 h-100 rounded-circle ${getStatusIndicatorClass(entry.status)}`}></div>
+                      </div>
+                      <div className="flex-grow-1">
+                        <p className="mb-1 fw-medium">
                           Reconciliation {entry.id}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="mb-0 small text-muted">
                           Created by {entry.createdBy} • {new Date(entry.createdAt).toLocaleDateString()}
                         </p>
                         {entry.rejectionReason && (
-                          <p className="text-xs text-red-600 mt-1 truncate max-w-xs">
-                            Rejected: {entry.rejectionReason}
+                          <p className="mb-0 small text-danger mt-1">
+                            Rejected: {entry.rejectionReason.substring(0, 50)}...
                           </p>
                         )}
                         {entry.status === 'approved' && entry.approvedBy && (
-                          <p className="text-xs text-green-600 mt-1">
+                          <p className="mb-0 small text-success mt-1">
                             Approved by {entry.approvedBy}
                           </p>
                         )}
                       </div>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(entry.status)}`}>
+                    <span className={getStatusBadgeClass(entry.status)}>
                       {entry.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
-                );
-              })}
-              {reconciliationEntries.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  No reconciliation activity yet.
-                </div>
-              )}
+                ))}
+                {reconciliationEntries.length === 0 && (
+                  <div className="text-center py-4 text-muted">
+                    No reconciliation activity yet.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Recent File Upload Activity */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent File Upload Activity</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {fileUploads.slice(0, 5).map((file) => (
-                <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(file.status)}`} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {file.fileName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {file.transactionCount} transactions • {file.source} • {file.uploadedBy}
-                      </p>
-                      {file.rejectionReason && (
-                        <p className="text-xs text-red-600 mt-1 truncate max-w-xs">
-                          Rejected: {file.rejectionReason}
+        <div className="col-lg-6">
+          <div className="card h-100">
+            <div className="card-header bg-white">
+              <h5 className="card-title mb-0">Recent File Upload Activity</h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex flex-column gap-3">
+                {fileUploads.slice(0, 5).map((file) => (
+                  <div key={file.id} className="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                    <div className="d-flex align-items-center">
+                      <div className={`rounded-circle me-3`} style={{ width: '12px', height: '12px' }}>
+                        <div className={`w-100 h-100 rounded-circle ${getStatusIndicatorClass(file.status)}`}></div>
+                      </div>
+                      <div className="flex-grow-1">
+                        <p className="mb-1 fw-medium">
+                          {file.fileName}
                         </p>
-                      )}
-                      {file.status === 'approved' && file.approvedBy && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Approved by {file.approvedBy}
+                        <p className="mb-0 small text-muted">
+                          {file.transactionCount} transactions • {file.source} • {file.uploadedBy}
                         </p>
-                      )}
+                        {file.rejectionReason && (
+                          <p className="mb-0 small text-danger mt-1">
+                            Rejected: {file.rejectionReason.substring(0, 50)}...
+                          </p>
+                        )}
+                        {file.status === 'approved' && file.approvedBy && (
+                          <p className="mb-0 small text-success mt-1">
+                            Approved by {file.approvedBy}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <span className={getStatusBadgeClass(file.status)}>
+                      {file.status.replace('_', ' ').toUpperCase()}
+                    </span>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(file.status)}`}>
-                    {file.status.replace('_', ' ').toUpperCase()}
-                  </span>
-                </div>
-              ))}
-              {fileUploads.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  No file upload activity yet.
-                </div>
-              )}
+                ))}
+                {fileUploads.length === 0 && (
+                  <div className="text-center py-4 text-muted">
+                    No file upload activity yet.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

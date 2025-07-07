@@ -38,50 +38,52 @@ export const ReconciliationForm: React.FC<ReconciliationFormProps> = ({
 
   if (!bankTransaction || !systemTransaction) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="text-center py-8">
-          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select Transactions to Match</h3>
-          <p className="text-gray-500">
-            Please select one bank transaction and one system transaction to create a reconciliation.
-          </p>
+      <div className="card h-100">
+        <div className="card-body d-flex align-items-center justify-content-center">
+          <div className="text-center py-4">
+            <MessageSquare className="text-muted mb-3" size={48} />
+            <h5 className="card-title">Select Transactions to Match</h5>
+            <p className="card-text text-muted">
+              Please select one bank transaction and one system transaction to create a reconciliation.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Create Reconciliation</h3>
+    <div className="card h-100">
+      <div className="card-header bg-white">
+        <h5 className="card-title mb-0">Create Reconciliation</h5>
       </div>
       
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-900">Bank Transaction</h4>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="font-medium text-gray-900">{bankTransaction.description}</p>
-              <p className="text-sm text-gray-500">
+      <form onSubmit={handleSubmit} className="card-body">
+        <div className="row g-3 mb-4">
+          <div className="col-md-6">
+            <h6 className="fw-medium mb-3">Bank Transaction</h6>
+            <div className="p-3 bg-light rounded">
+              <p className="fw-medium mb-1">{bankTransaction.description}</p>
+              <p className="small text-muted mb-2">
                 {bankTransaction.reference} • {new Date(bankTransaction.date).toLocaleDateString()}
               </p>
-              <p className={`text-lg font-semibold ${
-                bankTransaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+              <p className={`h5 fw-bold mb-0 ${
+                bankTransaction.type === 'credit' ? 'text-success' : 'text-danger'
               }`}>
                 {bankTransaction.type === 'credit' ? '+' : '-'}${bankTransaction.amount.toFixed(2)}
               </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-900">System Transaction</h4>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="font-medium text-gray-900">{systemTransaction.description}</p>
-              <p className="text-sm text-gray-500">
+          <div className="col-md-6">
+            <h6 className="fw-medium mb-3">System Transaction</h6>
+            <div className="p-3 bg-light rounded">
+              <p className="fw-medium mb-1">{systemTransaction.description}</p>
+              <p className="small text-muted mb-2">
                 {systemTransaction.reference} • {new Date(systemTransaction.date).toLocaleDateString()}
               </p>
-              <p className={`text-lg font-semibold ${
-                systemTransaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+              <p className={`h5 fw-bold mb-0 ${
+                systemTransaction.type === 'credit' ? 'text-success' : 'text-danger'
               }`}>
                 {systemTransaction.type === 'credit' ? '+' : '-'}${systemTransaction.amount.toFixed(2)}
               </p>
@@ -89,30 +91,26 @@ export const ReconciliationForm: React.FC<ReconciliationFormProps> = ({
           </div>
         </div>
 
-        <div className={`p-4 rounded-lg ${
-          canMatch ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-        }`}>
-          <div className="flex items-center space-x-2">
-            {canMatch ? (
-              <Check className="h-5 w-5 text-green-600" />
-            ) : (
-              <X className="h-5 w-5 text-red-600" />
-            )}
-            <span className={`font-medium ${
-              canMatch ? 'text-green-800' : 'text-red-800'
-            }`}>
-              {canMatch ? 'Transactions Match' : 'Transactions Do Not Match'}
-            </span>
-          </div>
+        <div className={`alert ${
+          canMatch ? 'alert-success' : 'alert-danger'
+        } d-flex align-items-center mb-4`}>
+          {canMatch ? (
+            <Check className="me-2" size={20} />
+          ) : (
+            <X className="me-2" size={20} />
+          )}
+          <span className="fw-medium">
+            {canMatch ? 'Transactions Match' : 'Transactions Do Not Match'}
+          </span>
           {!canMatch && (
-            <p className="text-sm text-red-600 mt-2">
-              Amount, type, or other criteria do not match between the selected transactions.
-            </p>
+            <div className="ms-auto">
+              <small>Amount, type, or other criteria do not match between the selected transactions.</small>
+            </div>
           )}
         </div>
 
-        <div>
-          <label htmlFor="comments" className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="mb-4">
+          <label htmlFor="comments" className="form-label fw-medium">
             Comments (Optional)
           </label>
           <textarea
@@ -120,23 +118,23 @@ export const ReconciliationForm: React.FC<ReconciliationFormProps> = ({
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="form-control"
             placeholder="Add any additional notes or comments..."
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="d-flex justify-content-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="btn btn-outline-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={userRole !== 'maker' && userRole !== 'admin'}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary"
           >
             Create Reconciliation
           </button>

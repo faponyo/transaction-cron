@@ -127,117 +127,28 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
 
   const pendingFiles = fileUploads.filter(file => file.status === 'pending_approval');
 
-  const TransactionTable: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
-    <div className="mt-4 overflow-hidden border border-gray-200 rounded-lg">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Account ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Transaction ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Reference
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {transactions.map((transaction, index) => (
-              <tr key={transaction.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                  {transaction.accountId}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {transaction.transId}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {new Date(transaction.date).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
-                  {transaction.description}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <div className="flex items-center">
-                    {transaction.type === 'credit' ? (
-                      <ArrowUpRight className="h-4 w-4 text-green-600 mr-1" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-600 mr-1" />
-                    )}
-                    <span className={`font-medium ${
-                      transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-right">
-                  <span className={`font-semibold ${
-                    transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {transaction.reference}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {transactions.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No transactions found in this file.
-        </div>
-      )}
-    </div>
-  );
-
   const StatusBadge: React.FC<{ status: string; className?: string }> = ({ status, className = "" }) => {
     const getStatusConfig = (status: string) => {
       switch (status) {
         case 'approved':
           return {
             icon: CheckCircle,
-            bgColor: 'bg-green-100',
-            textColor: 'text-green-800',
-            iconColor: 'text-green-600'
+            badgeClass: 'badge bg-success'
           };
         case 'rejected':
           return {
             icon: XCircle,
-            bgColor: 'bg-red-100',
-            textColor: 'text-red-800',
-            iconColor: 'text-red-600'
+            badgeClass: 'badge bg-danger'
           };
         case 'pending_approval':
           return {
             icon: AlertCircle,
-            bgColor: 'bg-yellow-100',
-            textColor: 'text-yellow-800',
-            iconColor: 'text-yellow-600'
+            badgeClass: 'badge bg-warning text-dark'
           };
         default:
           return {
             icon: AlertCircle,
-            bgColor: 'bg-gray-100',
-            textColor: 'text-gray-800',
-            iconColor: 'text-gray-600'
+            badgeClass: 'badge bg-secondary'
           };
       }
     };
@@ -246,320 +157,350 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor} ${className}`}>
-        <Icon className={`h-3 w-3 mr-1 ${config.iconColor}`} />
+      <span className={`${config.badgeClass} d-inline-flex align-items-center ${className}`}>
+        <Icon className="me-1" size={12} />
         {status.replace('_', ' ').toUpperCase()}
       </span>
     );
   };
 
+  const TransactionTable: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
+    <div className="mt-3">
+      <div className="table-responsive">
+        <table className="table table-sm">
+          <thead className="table-light">
+            <tr>
+              <th>Account ID</th>
+              <th>Transaction ID</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th className="text-end">Amount</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction, index) => (
+              <tr key={transaction.id}>
+                <td className="fw-medium">{transaction.accountId}</td>
+                <td>{transaction.transId}</td>
+                <td>{new Date(transaction.date).toLocaleDateString()}</td>
+                <td className="text-truncate" style={{ maxWidth: '200px' }}>
+                  {transaction.description}
+                </td>
+                <td>
+                  <div className="d-flex align-items-center">
+                    {transaction.type === 'credit' ? (
+                      <ArrowUpRight className="text-success me-1" size={16} />
+                    ) : (
+                      <ArrowDownRight className="text-danger me-1" size={16} />
+                    )}
+                    <span className={`fw-medium ${
+                      transaction.type === 'credit' ? 'text-success' : 'text-danger'
+                    }`}>
+                      {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                    </span>
+                  </div>
+                </td>
+                <td className="text-end">
+                  <span className={`fw-bold ${
+                    transaction.type === 'credit' ? 'text-success' : 'text-danger'
+                  }`}>
+                    {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                  </span>
+                </td>
+                <td>{transaction.reference}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {transactions.length === 0 && (
+          <div className="text-center py-4 text-muted">
+            No transactions found in this file.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="container-fluid">
       {/* File Upload Section */}
       {canUpload && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Transaction File</h3>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Transaction Source
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="bank"
-                  checked={selectedSource === 'bank'}
-                  onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
-                  className="mr-2"
-                />
-                Bank Transactions
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="system"
-                  checked={selectedSource === 'system'}
-                  onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
-                  className="mr-2"
-                />
-                System Transactions
+        <div className="card mb-4">
+          <div className="card-header bg-white">
+            <h5 className="card-title mb-0">Upload Transaction File</h5>
+          </div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label fw-medium">Transaction Source</label>
+              <div className="d-flex gap-3">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    value="bank"
+                    checked={selectedSource === 'bank'}
+                    onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
+                    id="source-bank"
+                  />
+                  <label className="form-check-label" htmlFor="source-bank">
+                    Bank Transactions
+                  </label>
+                </div>
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    value="system"
+                    checked={selectedSource === 'system'}
+                    onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
+                    id="source-system"
+                  />
+                  <label className="form-check-label" htmlFor="source-system">
+                    System Transactions
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`file-upload-zone p-5 text-center ${dragActive ? 'drag-active' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <Upload className="text-muted mb-3" size={48} />
+              <h6 className="mb-2">Drop your Excel file here, or click to browse</h6>
+              <p className="text-muted mb-3">
+                Supports .xlsx and .xls files with columns: accountId, transactionDate, transId, amount, description, type
+              </p>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileInputChange}
+                className="d-none"
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" className="btn btn-primary">
+                Choose File
               </label>
             </div>
-          </div>
 
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragActive 
-                ? 'border-blue-400 bg-blue-50' 
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-900 mb-2">
-              Drop your Excel file here, or click to browse
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Supports .xlsx and .xls files with columns: accountId, transactionDate, transId, amount, description, type
-            </p>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileInputChange}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer transition-colors"
-            >
-              Choose File
-            </label>
-          </div>
-
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">Excel File Format Requirements:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• <strong>accountId:</strong> Account identifier</li>
-              <li>• <strong>transactionDate:</strong> Date in YYYY-MM-DD format</li>
-              <li>• <strong>transId:</strong> Unique transaction ID</li>
-              <li>• <strong>amount:</strong> Transaction amount (positive number)</li>
-              <li>• <strong>description:</strong> Transaction description</li>
-              <li>• <strong>type:</strong> Either "credit" or "debit"</li>
-            </ul>
+            <div className="alert alert-info mt-3">
+              <h6 className="alert-heading">Excel File Format Requirements:</h6>
+              <ul className="mb-0 small">
+                <li><strong>accountId:</strong> Account identifier</li>
+                <li><strong>transactionDate:</strong> Date in YYYY-MM-DD format</li>
+                <li><strong>transId:</strong> Unique transaction ID</li>
+                <li><strong>amount:</strong> Transaction amount (positive number)</li>
+                <li><strong>description:</strong> Transaction description</li>
+                <li><strong>type:</strong> Either "credit" or "debit"</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
 
       {/* File Approval Queue */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">File Approval Queue</h3>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="card">
+        <div className="card-header bg-white">
+          <h5 className="card-title mb-1">File Approval Queue</h5>
+          <p className="card-text small text-muted mb-0">
             {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''} pending approval
           </p>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className="card-body p-0">
           {fileUploads.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Files Uploaded</h3>
-              <p className="text-gray-500">Upload Excel files to begin the reconciliation process.</p>
+            <div className="text-center py-5">
+              <FileText className="text-muted mb-3" size={48} />
+              <h5 className="mb-2">No Files Uploaded</h5>
+              <p className="text-muted">Upload Excel files to begin the reconciliation process.</p>
             </div>
           ) : (
-            fileUploads.map((file) => {
-              const isSelected = selectedFile === file.id;
-              const showingTransactions = showTransactions === file.id;
-              
-              return (
-                <div key={file.id} className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-full ${
-                        file.source === 'bank' ? 'bg-blue-100' : 'bg-green-100'
-                      }`}>
-                        <FileText className={`h-5 w-5 ${
-                          file.source === 'bank' ? 'text-blue-600' : 'text-green-600'
-                        }`} />
+            <div className="list-group list-group-flush">
+              {fileUploads.map((file) => {
+                const isSelected = selectedFile === file.id;
+                const showingTransactions = showTransactions === file.id;
+                
+                return (
+                  <div key={file.id} className="list-group-item">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className={`p-2 rounded-circle me-3 ${
+                          file.source === 'bank' ? 'bg-primary bg-opacity-10' : 'bg-success bg-opacity-10'
+                        }`}>
+                          <FileText className={`${
+                            file.source === 'bank' ? 'text-primary' : 'text-success'
+                          }`} size={20} />
+                        </div>
+                        <div>
+                          <h6 className="mb-1 fw-medium">{file.fileName}</h6>
+                          <p className="mb-0 small text-muted">
+                            {file.transactionCount} transactions • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">{file.fileName}</h4>
-                        <p className="text-sm text-gray-500">
-                          {file.transactionCount} transactions • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <StatusBadge status={file.status} />
-                      <button
-                        onClick={() => handleDownloadFile(file)}
-                        className="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-800 font-medium transition-colors"
-                        title="Download file"
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
-                      </button>
-                      <button
-                        onClick={() => setShowTransactions(showingTransactions ? null : file.id)}
-                        className="flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                      >
-                        {showingTransactions ? (
-                          <>
-                            <EyeOff className="h-4 w-4 mr-1" />
-                            Hide Transactions
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View Transactions
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setSelectedFile(isSelected ? null : file.id)}
-                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                      >
-                        {isSelected ? 'Hide Details' : 'View Details'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Approval/Rejection Remarks Display */}
-                  {(file.status === 'approved' || file.status === 'rejected') && (
-                    <div className={`mb-4 p-4 rounded-lg border ${
-                      file.status === 'approved' 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-red-50 border-red-200'
-                    }`}>
-                      <div className="flex items-start space-x-3">
-                        {file.status === 'approved' ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className={`text-sm font-medium ${
-                              file.status === 'approved' ? 'text-green-900' : 'text-red-900'
-                            }`}>
-                              {file.status === 'approved' ? 'File Approved' : 'File Rejected'}
-                            </h5>
-                            <span className={`text-xs ${
-                              file.status === 'approved' ? 'text-green-700' : 'text-red-700'
-                            }`}>
-                              {file.approvedBy} • {file.approvedAt && new Date(file.approvedAt).toLocaleString()}
-                            </span>
-                          </div>
-                          {file.rejectionReason && (
-                            <div className="bg-white p-3 rounded border border-red-200">
-                              <p className="text-sm text-red-800">
-                                <strong>Reason:</strong> {file.rejectionReason}
-                              </p>
-                            </div>
+                      <div className="d-flex align-items-center gap-2">
+                        <StatusBadge status={file.status} />
+                        <button
+                          onClick={() => handleDownloadFile(file)}
+                          className="btn btn-outline-success btn-sm d-flex align-items-center"
+                          title="Download file"
+                        >
+                          <Download className="me-1" size={14} />
+                          Download
+                        </button>
+                        <button
+                          onClick={() => setShowTransactions(showingTransactions ? null : file.id)}
+                          className="btn btn-outline-primary btn-sm d-flex align-items-center"
+                        >
+                          {showingTransactions ? (
+                            <>
+                              <EyeOff className="me-1" size={14} />
+                              Hide
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="me-1" size={14} />
+                              View
+                            </>
                           )}
-                        </div>
+                        </button>
+                        <button
+                          onClick={() => setSelectedFile(isSelected ? null : file.id)}
+                          className="btn btn-outline-secondary btn-sm"
+                        >
+                          {isSelected ? 'Hide Details' : 'Details'}
+                        </button>
                       </div>
                     </div>
-                  )}
 
-                  {showingTransactions && (
-                    <div className="mb-6">
-                      <h5 className="text-sm font-medium text-gray-900 mb-3">
-                        Transaction Details ({file.transactionCount} transactions)
-                      </h5>
-                      <TransactionTable transactions={file.transactions} />
-                    </div>
-                  )}
-
-                  {isSelected && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <h5 className="font-medium text-gray-900 mb-2">File Details</h5>
-                          <div className="space-y-2 text-sm">
-                            <p><span className="font-medium">Source:</span> {file.source === 'bank' ? 'Bank' : 'System'}</p>
-                            <p><span className="font-medium">Transactions:</span> {file.transactionCount}</p>
-                            <p><span className="font-medium">Uploaded:</span> {new Date(file.uploadedAt).toLocaleString()}</p>
+                    {/* Approval/Rejection Remarks Display */}
+                    {(file.status === 'approved' || file.status === 'rejected') && (
+                      <div className={`alert ${
+                        file.status === 'approved' ? 'alert-success' : 'alert-danger'
+                      } mb-3`}>
+                        <div className="d-flex align-items-start">
+                          {file.status === 'approved' ? (
+                            <CheckCircle className="me-2 mt-1" size={20} />
+                          ) : (
+                            <XCircle className="me-2 mt-1" size={20} />
+                          )}
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <h6 className="mb-0">
+                                {file.status === 'approved' ? 'File Approved' : 'File Rejected'}
+                              </h6>
+                              <small className="text-muted">
+                                {file.approvedBy} • {file.approvedAt && new Date(file.approvedAt).toLocaleString()}
+                              </small>
+                            </div>
+                            {file.rejectionReason && (
+                              <div className="alert alert-light border mb-0">
+                                <strong>Reason:</strong> {file.rejectionReason}
+                              </div>
+                            )}
                           </div>
                         </div>
+                      </div>
+                    )}
 
-                        {file.approvedBy && file.status === 'approved' && (
-                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                            <h5 className="font-medium text-green-900 mb-2">Approval Details</h5>
-                            <div className="space-y-2 text-sm">
-                              <p><span className="font-medium">Approved by:</span> {file.approvedBy}</p>
-                              <p><span className="font-medium">Approved at:</span> {file.approvedAt && new Date(file.approvedAt).toLocaleString()}</p>
-                            </div>
-                          </div>
-                        )}
+                    {showingTransactions && (
+                      <div className="mb-3">
+                        <h6 className="fw-medium mb-2">
+                          Transaction Details ({file.transactionCount} transactions)
+                        </h6>
+                        <TransactionTable transactions={file.transactions} />
+                      </div>
+                    )}
 
-                        {file.rejectionReason && file.status === 'rejected' && (
-                          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                            <h5 className="font-medium text-red-900 mb-2">Rejection Details</h5>
-                            <div className="space-y-2 text-sm">
-                              <p><span className="font-medium">Rejected by:</span> {file.approvedBy}</p>
-                              <p><span className="font-medium">Rejected at:</span> {file.approvedAt && new Date(file.approvedAt).toLocaleString()}</p>
-                              <div className="mt-2 p-2 bg-white rounded border">
-                                <p className="text-red-800"><strong>Reason:</strong> {file.rejectionReason}</p>
+                    {isSelected && (
+                      <div className="mt-3">
+                        <div className="row g-3 mb-4">
+                          <div className="col-md-4">
+                            <div className="p-3 bg-light rounded">
+                              <h6 className="fw-medium mb-2">File Details</h6>
+                              <div className="small">
+                                <p className="mb-1"><span className="fw-medium">Source:</span> {file.source === 'bank' ? 'Bank' : 'System'}</p>
+                                <p className="mb-1"><span className="fw-medium">Transactions:</span> {file.transactionCount}</p>
+                                <p className="mb-0"><span className="fw-medium">Uploaded:</span> {new Date(file.uploadedAt).toLocaleString()}</p>
                               </div>
                             </div>
                           </div>
+                        </div>
+
+                        {/* Approval Form - Always show for pending files when user can approve */}
+                        {file.status === 'pending_approval' && canApprove && (
+                          <div className="border-top pt-4 bg-light p-3 rounded">
+                            <h6 className="mb-3">File Approval</h6>
+                            
+                            <div className="mb-3">
+                              <label htmlFor={`approval-comments-${file.id}`} className="form-label fw-medium">
+                                Approval Comments (Optional)
+                              </label>
+                              <textarea
+                                id={`approval-comments-${file.id}`}
+                                value={approvalComments[file.id] || ''}
+                                onChange={(e) => updateApprovalComments(file.id, e.target.value)}
+                                rows={3}
+                                className="form-control"
+                                placeholder="Add any comments for this approval..."
+                              />
+                            </div>
+
+                            <div className="mb-3">
+                              <label htmlFor={`rejection-reason-${file.id}`} className="form-label fw-medium">
+                                Rejection Reason (Required if rejecting)
+                              </label>
+                              <textarea
+                                id={`rejection-reason-${file.id}`}
+                                value={rejectionReasons[file.id] || ''}
+                                onChange={(e) => updateRejectionReason(file.id, e.target.value)}
+                                rows={3}
+                                className="form-control"
+                                placeholder="Provide detailed reason for rejection..."
+                              />
+                            </div>
+
+                            <div className="d-flex justify-content-end gap-2">
+                              <button
+                                onClick={() => handleReject(file.id)}
+                                disabled={!rejectionReasons[file.id]?.trim()}
+                                className="btn btn-danger d-flex align-items-center"
+                              >
+                                <X className="me-1" size={16} />
+                                Reject File
+                              </button>
+                              <button
+                                onClick={() => handleApprove(file.id)}
+                                className="btn btn-success d-flex align-items-center"
+                              >
+                                <Check className="me-1" size={16} />
+                                Approve File
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {file.status === 'pending_approval' && !canApprove && (
+                          <div className="alert alert-warning">
+                            <div className="d-flex align-items-center">
+                              <AlertCircle className="me-2" size={20} />
+                              <p className="mb-0">
+                                You need checker or admin role to approve file uploads.
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
-
-                      {/* Approval Form - Always show for pending files when user can approve */}
-                      {file.status === 'pending_approval' && canApprove && (
-                        <div className="space-y-4 border-t pt-4 bg-gray-50 p-4 rounded-lg">
-                          <h5 className="text-lg font-medium text-gray-900 mb-4">File Approval</h5>
-                          
-                          <div>
-                            <label htmlFor={`approval-comments-${file.id}`} className="block text-sm font-medium text-gray-700 mb-2">
-                              Approval Comments (Optional)
-                            </label>
-                            <textarea
-                              id={`approval-comments-${file.id}`}
-                              value={approvalComments[file.id] || ''}
-                              onChange={(e) => updateApprovalComments(file.id, e.target.value)}
-                              rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Add any comments for this approval..."
-                            />
-                          </div>
-
-                          <div>
-                            <label htmlFor={`rejection-reason-${file.id}`} className="block text-sm font-medium text-gray-700 mb-2">
-                              Rejection Reason (Required if rejecting)
-                            </label>
-                            <textarea
-                              id={`rejection-reason-${file.id}`}
-                              value={rejectionReasons[file.id] || ''}
-                              onChange={(e) => updateRejectionReason(file.id, e.target.value)}
-                              rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                              placeholder="Provide detailed reason for rejection..."
-                            />
-                          </div>
-
-                          <div className="flex justify-end space-x-3">
-                            <button
-                              onClick={() => handleReject(file.id)}
-                              disabled={!rejectionReasons[file.id]?.trim()}
-                              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <X className="h-4 w-4 mr-2" />
-                              Reject File
-                            </button>
-                            <button
-                              onClick={() => handleApprove(file.id)}
-                              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                            >
-                              <Check className="h-4 w-4 mr-2" />
-                              Approve File
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {file.status === 'pending_approval' && !canApprove && (
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <div className="flex items-center">
-                            <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                            <p className="text-sm text-yellow-800">
-                              You need checker or admin role to approve file uploads.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

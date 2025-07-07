@@ -1,3 +1,74 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Custom styles */
+.transaction-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.transaction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selected-transaction {
+  border-left: 4px solid #0d6efd !important;
+  background-color: #e7f3ff !important;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.nav-tabs .nav-link:not(.active) {
+  color: #6c757d;
+}
+
+.nav-tabs .nav-link:not(.active):hover {
+  color: #495057;
+  background-color: #f8f9fa;
+}
+
+.file-upload-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.file-upload-zone:hover {
+  border-color: #adb5bd;
+}
+
+.file-upload-zone.drag-active {
+  border-color: #0d6efd;
+  background-color: #e7f3ff;
+}
+
+.transaction-type-credit {
+  color: #198754;
+}
+
+.transaction-type-debit {
+  color: #dc3545;
+}
+
+.bg-credit {
+  background-color: #d1e7dd;
+}
+
+.bg-debit {
+  background-color: #f8d7da;
+}

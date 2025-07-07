@@ -52,30 +52,22 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
         case 'approved':
           return {
             icon: CheckCircle,
-            bgColor: 'bg-green-100',
-            textColor: 'text-green-800',
-            iconColor: 'text-green-600'
+            badgeClass: 'badge bg-success'
           };
         case 'rejected':
           return {
             icon: XCircle,
-            bgColor: 'bg-red-100',
-            textColor: 'text-red-800',
-            iconColor: 'text-red-600'
+            badgeClass: 'badge bg-danger'
           };
         case 'pending_approval':
           return {
             icon: AlertCircle,
-            bgColor: 'bg-yellow-100',
-            textColor: 'text-yellow-800',
-            iconColor: 'text-yellow-600'
+            badgeClass: 'badge bg-warning text-dark'
           };
         default:
           return {
             icon: AlertCircle,
-            bgColor: 'bg-gray-100',
-            textColor: 'text-gray-800',
-            iconColor: 'text-gray-600'
+            badgeClass: 'badge bg-secondary'
           };
       }
     };
@@ -84,217 +76,213 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor} ${className}`}>
-        <Icon className={`h-3 w-3 mr-1 ${config.iconColor}`} />
+      <span className={`${config.badgeClass} d-inline-flex align-items-center ${className}`}>
+        <Icon className="me-1" size={12} />
         {status.replace('_', ' ').toUpperCase()}
       </span>
     );
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Approval Queue</h3>
-        <p className="text-sm text-gray-500 mt-1">
+    <div className="card">
+      <div className="card-header bg-white">
+        <h5 className="card-title mb-1">Approval Queue</h5>
+        <p className="card-text small text-muted mb-0">
           {pendingEntries.length} reconciliation{pendingEntries.length !== 1 ? 's' : ''} pending approval
         </p>
       </div>
 
-      <div className="divide-y divide-gray-200">
+      <div className="card-body p-0">
         {entries.length === 0 ? (
-          <div className="p-8 text-center">
-            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Reconciliations</h3>
-            <p className="text-gray-500">No reconciliation entries have been created yet.</p>
+          <div className="text-center py-5">
+            <MessageSquare className="text-muted mb-3" size={48} />
+            <h5 className="mb-2">No Reconciliations</h5>
+            <p className="text-muted">No reconciliation entries have been created yet.</p>
           </div>
         ) : (
-          entries.map((entry) => {
-            const bankTxn = getBankTransaction(entry.bankTransactionId);
-            const systemTxn = getSystemTransaction(entry.systemTransactionId);
-            const isSelected = selectedEntry === entry.id;
+          <div className="list-group list-group-flush">
+            {entries.map((entry) => {
+              const bankTxn = getBankTransaction(entry.bankTransactionId);
+              const systemTxn = getSystemTransaction(entry.systemTransactionId);
+              const isSelected = selectedEntry === entry.id;
 
-            return (
-              <div key={entry.id} className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      Reconciliation {entry.id}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      Created by {entry.createdBy} • {new Date(entry.createdAt).toLocaleDateString()}
-                    </p>
+              return (
+                <div key={entry.id} className="list-group-item">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <h6 className="mb-1 fw-medium">
+                        Reconciliation {entry.id}
+                      </h6>
+                      <p className="mb-0 small text-muted">
+                        Created by {entry.createdBy} • {new Date(entry.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <StatusBadge status={entry.status} />
+                      <button
+                        onClick={() => setSelectedEntry(isSelected ? null : entry.id)}
+                        className="btn btn-outline-primary btn-sm"
+                      >
+                        {isSelected ? 'Hide Details' : 'View Details'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <StatusBadge status={entry.status} />
-                    <button
-                      onClick={() => setSelectedEntry(isSelected ? null : entry.id)}
-                      className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                    >
-                      {isSelected ? 'Hide Details' : 'View Details'}
-                    </button>
-                  </div>
-                </div>
 
-                {/* Approval/Rejection Remarks Display */}
-                {(entry.status === 'approved' || entry.status === 'rejected') && (
-                  <div className={`mb-4 p-4 rounded-lg border ${
-                    entry.status === 'approved' 
-                      ? 'bg-green-50 border-green-200' 
-                      : 'bg-red-50 border-red-200'
-                  }`}>
-                    <div className="flex items-start space-x-3">
-                      {entry.status === 'approved' ? (
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className={`text-sm font-medium ${
-                            entry.status === 'approved' ? 'text-green-900' : 'text-red-900'
-                          }`}>
-                            {entry.status === 'approved' ? 'Reconciliation Approved' : 'Reconciliation Rejected'}
-                          </h5>
-                          <span className={`text-xs ${
-                            entry.status === 'approved' ? 'text-green-700' : 'text-red-700'
-                          }`}>
-                            {entry.approvedBy} • {entry.approvedAt && new Date(entry.approvedAt).toLocaleString()}
-                          </span>
-                        </div>
-                        {entry.rejectionReason && (
-                          <div className="bg-white p-3 rounded border border-red-200">
-                            <p className="text-sm text-red-800">
+                  {/* Approval/Rejection Remarks Display */}
+                  {(entry.status === 'approved' || entry.status === 'rejected') && (
+                    <div className={`alert ${
+                      entry.status === 'approved' ? 'alert-success' : 'alert-danger'
+                    } mb-3`}>
+                      <div className="d-flex align-items-start">
+                        {entry.status === 'approved' ? (
+                          <CheckCircle className="me-2 mt-1" size={20} />
+                        ) : (
+                          <XCircle className="me-2 mt-1" size={20} />
+                        )}
+                        <div className="flex-grow-1">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0">
+                              {entry.status === 'approved' ? 'Reconciliation Approved' : 'Reconciliation Rejected'}
+                            </h6>
+                            <small className="text-muted">
+                              {entry.approvedBy} • {entry.approvedAt && new Date(entry.approvedAt).toLocaleString()}
+                            </small>
+                          </div>
+                          {entry.rejectionReason && (
+                            <div className="alert alert-light border mb-0">
                               <strong>Reason:</strong> {entry.rejectionReason}
-                            </p>
-                          </div>
-                        )}
-                        {entry.status === 'approved' && entry.comments && (
-                          <div className="bg-white p-3 rounded border border-green-200">
-                            <p className="text-sm text-green-800">
+                            </div>
+                          )}
+                          {entry.status === 'approved' && entry.comments && (
+                            <div className="alert alert-light border mb-0">
                               <strong>Comments:</strong> {entry.comments}
-                            </p>
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {isSelected && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">Bank Transaction</h5>
-                        {bankTxn && (
-                          <div>
-                            <p className="text-sm text-gray-900">{bankTxn.description}</p>
-                            <p className="text-sm text-gray-500">
-                              {bankTxn.reference} • {new Date(bankTxn.date).toLocaleDateString()}
-                            </p>
-                            <p className={`text-lg font-semibold ${
-                              bankTxn.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {bankTxn.type === 'credit' ? '+' : '-'}${bankTxn.amount.toFixed(2)}
-                            </p>
+                  {isSelected && (
+                    <div className="mt-3">
+                      <div className="row g-3 mb-4">
+                        <div className="col-md-6">
+                          <div className="p-3 bg-light rounded">
+                            <h6 className="fw-medium mb-2">Bank Transaction</h6>
+                            {bankTxn && (
+                              <div>
+                                <p className="mb-1 fw-medium">{bankTxn.description}</p>
+                                <p className="mb-2 small text-muted">
+                                  {bankTxn.reference} • {new Date(bankTxn.date).toLocaleDateString()}
+                                </p>
+                                <p className={`h6 fw-bold mb-0 ${
+                                  bankTxn.type === 'credit' ? 'text-success' : 'text-danger'
+                                }`}>
+                                  {bankTxn.type === 'credit' ? '+' : '-'}${bankTxn.amount.toFixed(2)}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+
+                        <div className="col-md-6">
+                          <div className="p-3 bg-light rounded">
+                            <h6 className="fw-medium mb-2">System Transaction</h6>
+                            {systemTxn && (
+                              <div>
+                                <p className="mb-1 fw-medium">{systemTxn.description}</p>
+                                <p className="mb-2 small text-muted">
+                                  {systemTxn.reference} • {new Date(systemTxn.date).toLocaleDateString()}
+                                </p>
+                                <p className={`h6 fw-bold mb-0 ${
+                                  systemTxn.type === 'credit' ? 'text-success' : 'text-danger'
+                                }`}>
+                                  {systemTxn.type === 'credit' ? '+' : '-'}${systemTxn.amount.toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">System Transaction</h5>
-                        {systemTxn && (
-                          <div>
-                            <p className="text-sm text-gray-900">{systemTxn.description}</p>
-                            <p className="text-sm text-gray-500">
-                              {systemTxn.reference} • {new Date(systemTxn.date).toLocaleDateString()}
-                            </p>
-                            <p className={`text-lg font-semibold ${
-                              systemTxn.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {systemTxn.type === 'credit' ? '+' : '-'}${systemTxn.amount.toFixed(2)}
+                      {entry.comments && entry.status === 'pending_approval' && (
+                        <div className="alert alert-info mb-4">
+                          <div className="d-flex align-items-start">
+                            <MessageCircle className="me-2 mt-1" size={16} />
+                            <div>
+                              <h6 className="mb-1">Maker Comments</h6>
+                              <p className="mb-0 small">{entry.comments}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {canApprove && entry.status === 'pending_approval' && (
+                        <div className="border-top pt-4">
+                          <div className="mb-3">
+                            <label htmlFor="actionComments" className="form-label fw-medium">
+                              Approval Comments (Optional)
+                            </label>
+                            <textarea
+                              id="actionComments"
+                              value={actionComments}
+                              onChange={(e) => setActionComments(e.target.value)}
+                              rows={2}
+                              className="form-control"
+                              placeholder="Add any comments for this approval..."
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label htmlFor="rejectionReason" className="form-label fw-medium">
+                              Rejection Reason (Required if rejecting)
+                            </label>
+                            <textarea
+                              id="rejectionReason"
+                              value={rejectionReason}
+                              onChange={(e) => setRejectionReason(e.target.value)}
+                              rows={2}
+                              className="form-control"
+                              placeholder="Provide detailed reason for rejection..."
+                            />
+                          </div>
+
+                          <div className="d-flex justify-content-end gap-2">
+                            <button
+                              onClick={() => handleReject(entry.id)}
+                              disabled={!rejectionReason.trim()}
+                              className="btn btn-danger d-flex align-items-center"
+                            >
+                              <X className="me-1" size={16} />
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => handleApprove(entry.id)}
+                              className="btn btn-success d-flex align-items-center"
+                            >
+                              <Check className="me-1" size={16} />
+                              Approve
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {!canApprove && entry.status === 'pending_approval' && (
+                        <div className="alert alert-warning">
+                          <div className="d-flex align-items-center">
+                            <AlertCircle className="me-2" size={20} />
+                            <p className="mb-0">
+                              You need checker or admin role to approve reconciliations.
                             </p>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-
-                    {entry.comments && entry.status === 'pending_approval' && (
-                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-start space-x-2">
-                          <MessageCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-                          <div>
-                            <h5 className="font-medium text-blue-900 mb-1">Maker Comments</h5>
-                            <p className="text-sm text-blue-800">{entry.comments}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {canApprove && entry.status === 'pending_approval' && (
-                      <div className="space-y-4 border-t pt-4">
-                        <div>
-                          <label htmlFor="actionComments" className="block text-sm font-medium text-gray-700 mb-2">
-                            Approval Comments (Optional)
-                          </label>
-                          <textarea
-                            id="actionComments"
-                            value={actionComments}
-                            onChange={(e) => setActionComments(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Add any comments for this approval..."
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="rejectionReason" className="block text-sm font-medium text-gray-700 mb-2">
-                            Rejection Reason (Required if rejecting)
-                          </label>
-                          <textarea
-                            id="rejectionReason"
-                            value={rejectionReason}
-                            onChange={(e) => setRejectionReason(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            placeholder="Provide detailed reason for rejection..."
-                          />
-                        </div>
-
-                        <div className="flex justify-end space-x-3">
-                          <button
-                            onClick={() => handleReject(entry.id)}
-                            disabled={!rejectionReason.trim()}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            Reject
-                          </button>
-                          <button
-                            onClick={() => handleApprove(entry.id)}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                          >
-                            <Check className="h-4 w-4 mr-2" />
-                            Approve
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {!canApprove && entry.status === 'pending_approval' && (
-                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center">
-                          <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                          <p className="text-sm text-yellow-800">
-                            You need checker or admin role to approve reconciliations.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

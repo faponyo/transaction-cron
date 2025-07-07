@@ -51,67 +51,57 @@ function App() {
     transactions.filter(t => t.status === 'unreconciled');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-vh-100 bg-light">
       <Header 
         currentUser={currentUser}
         onRoleChange={changeUserRole}
         onLogout={handleLogout}
       />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <nav className="mb-8">
-          <div className="flex space-x-4 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeTab === 'dashboard' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeTab === 'upload' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              File Upload
-            </button>
-            <button
-              onClick={() => setActiveTab('individual')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeTab === 'individual' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Individual Entry
-            </button>
-            <button
-              onClick={() => setActiveTab('reconcile')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeTab === 'reconcile' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Reconcile
-            </button>
-            <button
-              onClick={() => setActiveTab('approve')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                activeTab === 'approve' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Approve
-            </button>
-          </div>
+      <div className="container-fluid py-4">
+        <nav className="mb-4">
+          <ul className="nav nav-tabs">
+            <li className="nav-item">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+              >
+                Dashboard
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                onClick={() => setActiveTab('upload')}
+                className={`nav-link ${activeTab === 'upload' ? 'active' : ''}`}
+              >
+                File Upload
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                onClick={() => setActiveTab('individual')}
+                className={`nav-link ${activeTab === 'individual' ? 'active' : ''}`}
+              >
+                Individual Entry
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                onClick={() => setActiveTab('reconcile')}
+                className={`nav-link ${activeTab === 'reconcile' ? 'active' : ''}`}
+              >
+                Reconcile
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                onClick={() => setActiveTab('approve')}
+                className={`nav-link ${activeTab === 'approve' ? 'active' : ''}`}
+              >
+                Approve
+              </button>
+            </li>
+          </ul>
         </nav>
 
         {activeTab === 'dashboard' && (
@@ -141,20 +131,24 @@ function App() {
         )}
 
         {activeTab === 'reconcile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <TransactionList
-              title="Bank Transactions"
-              transactions={unreconciled(bankTransactions)}
-              selectedTransaction={selectedBankTransaction}
-              onTransactionSelect={setSelectedBankTransaction}
-            />
-            <TransactionList
-              title="System Transactions"
-              transactions={unreconciled(systemTransactions)}
-              selectedTransaction={selectedSystemTransaction}
-              onTransactionSelect={setSelectedSystemTransaction}
-            />
-            <div className="lg:col-span-1">
+          <div className="row g-4">
+            <div className="col-lg-4">
+              <TransactionList
+                title="Bank Transactions"
+                transactions={unreconciled(bankTransactions)}
+                selectedTransaction={selectedBankTransaction}
+                onTransactionSelect={setSelectedBankTransaction}
+              />
+            </div>
+            <div className="col-lg-4">
+              <TransactionList
+                title="System Transactions"
+                transactions={unreconciled(systemTransactions)}
+                selectedTransaction={selectedSystemTransaction}
+                onTransactionSelect={setSelectedSystemTransaction}
+              />
+            </div>
+            <div className="col-lg-4">
               <ReconciliationForm
                 bankTransaction={selectedBankTransaction}
                 systemTransaction={selectedSystemTransaction}

@@ -77,9 +77,9 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
 
   if (!canAdd) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="text-center py-4">
-          <p className="text-sm text-gray-500">
+      <div className="card">
+        <div className="card-body text-center py-4">
+          <p className="text-muted mb-0">
             You need maker or admin role to add individual transactions.
           </p>
         </div>
@@ -88,22 +88,22 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Add Individual Transaction</h3>
+    <div className="card">
+      <div className="card-header bg-white">
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="card-title mb-0">Add Individual Transaction</h5>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="btn btn-primary d-flex align-items-center"
           >
             {isOpen ? (
               <>
-                <X className="h-4 w-4 mr-2" />
+                <X className="me-1" size={16} />
                 Cancel
               </>
             ) : (
               <>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="me-1" size={16} />
                 Add Transaction
               </>
             )}
@@ -112,17 +112,17 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
       </div>
 
       {isOpen && (
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-2">
+        <form onSubmit={handleSubmit} className="card-body">
+          <div className="row g-3 mb-4">
+            <div className="col-md-6">
+              <label htmlFor="source" className="form-label fw-medium">
                 Transaction Source *
               </label>
               <select
                 id="source"
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value as 'bank' | 'system' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-select"
                 required
               >
                 <option value="bank">Bank Transaction</option>
@@ -130,8 +130,8 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
               </select>
             </div>
 
-            <div>
-              <label htmlFor="accountId" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="col-md-6">
+              <label htmlFor="accountId" className="form-label fw-medium">
                 Account ID *
               </label>
               <input
@@ -139,14 +139,14 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
                 id="accountId"
                 value={formData.accountId}
                 onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-control"
                 placeholder="e.g., ACC-001"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="col-md-6">
+              <label htmlFor="date" className="form-label fw-medium">
                 Transaction Date *
               </label>
               <input
@@ -154,13 +154,13 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
                 id="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-control"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="transId" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="col-md-6">
+              <label htmlFor="transId" className="form-label fw-medium">
                 Transaction ID *
               </label>
               <input
@@ -168,14 +168,14 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
                 id="transId"
                 value={formData.transId}
                 onChange={(e) => setFormData({ ...formData, transId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-control"
                 placeholder="e.g., TXN-001"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="col-md-6">
+              <label htmlFor="amount" className="form-label fw-medium">
                 Amount *
               </label>
               <input
@@ -185,21 +185,21 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
                 min="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-control"
                 placeholder="0.00"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="col-md-6">
+              <label htmlFor="type" className="form-label fw-medium">
                 Transaction Type *
               </label>
               <select
                 id="type"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'credit' | 'debit' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="form-select"
                 required
               >
                 <option value="credit">Credit</option>
@@ -208,8 +208,8 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-3">
+            <label htmlFor="description" className="form-label fw-medium">
               Description *
             </label>
             <input
@@ -217,14 +217,14 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="form-control"
               placeholder="Transaction description"
               required
             />
           </div>
 
-          <div>
-            <label htmlFor="reference" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-4">
+            <label htmlFor="reference" className="form-label fw-medium">
               Reference (Optional)
             </label>
             <input
@@ -232,22 +232,22 @@ export const IndividualTransactionForm: React.FC<IndividualTransactionFormProps>
               id="reference"
               value={formData.reference}
               onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="form-control"
               placeholder="Reference number or code"
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="d-flex justify-content-end gap-2">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn btn-outline-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn btn-primary"
             >
               Add Transaction
             </button>
