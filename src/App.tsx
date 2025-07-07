@@ -24,6 +24,7 @@ function App() {
     rejectFile,
     addIndividualTransaction,
     changeUserRole,
+    searchFileUploads,
   } = useReconciliation();
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'upload' | 'individual' | 'reconcile' | 'approve'>('dashboard');
@@ -119,6 +120,7 @@ function App() {
             onFileUpload={handleFileUpload}
             onApproveFile={approveFile}
             onRejectFile={rejectFile}
+            onSearchFiles={searchFileUploads}
             userRole={currentUser.role}
           />
         )}

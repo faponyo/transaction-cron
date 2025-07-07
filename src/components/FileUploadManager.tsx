@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { FileUpload, Transaction } from '../types';
-import { Upload, FileText, Check, X, AlertCircle, Download, ArrowUpRight, ArrowDownRight, Eye, EyeOff, MessageCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FileUpload, Transaction, PaginatedResponse, FileUploadSearchParams } from '../types';
+import { Upload, FileText, Check, X, AlertCircle, Download, ArrowUpRight, ArrowDownRight, Eye, EyeOff, MessageCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight, Search, Filter, Loader } from 'lucide-react';
 
 interface FileUploadManagerProps {
   fileUploads: FileUpload[];
   onFileUpload: (file: File, source: 'bank' | 'system', organization: string, schedule: string, remarks?: string) => void;
   onApproveFile: (fileId: string, comments?: string) => void;
   onRejectFile: (fileId: string, reason: string) => void;
+  onSearchFiles: (params: FileUploadSearchParams) => Promise<PaginatedResponse<FileUpload>>;
   userRole: string;
 }
 
@@ -15,6 +16,7 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   onFileUpload,
   onApproveFile,
   onRejectFile,
+  onSearchFiles,
   userRole
 }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -27,10 +29,19 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   const [approvalComments, setApprovalComments] = useState<{ [key: string]: string }>({});
   const [rejectionReasons, setRejectionReasons] = useState<{ [key: string]: string }>({});
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending_approval' | 'approved' | 'rejected'>('all');
+  // Search and pagination state
+  const [searchParams, setSearchParams] = useState<FileUploadSearchParams>({
+    page: 1,
+    pageSize: 10,
+    organization: 'all',
+    schedule: 'all',
+    status: 'all',
+    searchTerm: ''
+  });
+  const [paginatedData, setPaginatedData] = useState<PaginatedResponse<FileUpload> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Organization options
   const organizationOptions = [
@@ -56,23 +67,76 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     'Real-time'
   ];
 
-  // Filter and paginate files
-  const filteredFiles = useMemo(() => {
-    if (statusFilter === 'all') {
-      return fileUploads;
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((params: FileUploadSearchParams) => {
+      performSearch(params);
+    }, 500),
+    [onSearchFiles]
+  );
+
+  // Perform search with loading state
+  const performSearch = useCallback(async (params: FileUploadSearchParams) => {
+    setIsLoading(true);
+    try {
+      const result = await onSearchFiles(params);
+      setPaginatedData(result);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
     }
-    return fileUploads.filter(file => file.status === statusFilter);
-  }, [fileUploads, statusFilter]);
+  }, [onSearchFiles]);
 
-  const totalPages = Math.ceil(filteredFiles.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const currentFiles = filteredFiles.slice(startIndex, endIndex);
+  // Initial load and search when params change
+  useEffect(() => {
+    debouncedSearch(searchParams);
+  }, [searchParams, debouncedSearch]);
 
-  // Reset to first page when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, pageSize]);
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setSearchParams(prev => ({
+      ...prev,
+      searchTerm: value,
+      page: 1 // Reset to first page on new search
+    }));
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (key: keyof FileUploadSearchParams, value: any) => {
+    setSearchParams(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1 // Reset to first page on filter change
+    }));
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setSearchParams(prev => ({ ...prev, page }));
+    // Close any open details when changing pages
+    setSelectedFile(null);
+    setShowTransactions(null);
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (pageSize: number) => {
+    setSearchParams(prev => ({ ...prev, pageSize, page: 1 }));
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSearchParams({
+      page: 1,
+      pageSize: searchParams.pageSize,
+      organization: 'all',
+      schedule: 'all',
+      status: 'all',
+      searchTerm: ''
+    });
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -108,6 +172,9 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
       setSelectedOrganization('');
       setSelectedSchedule('');
       setUploadRemarks('');
+      
+      // Refresh search results
+      performSearch(searchParams);
     } else {
       alert('Please upload only Excel files (.xlsx or .xls)');
     }
@@ -161,6 +228,8 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     onApproveFile(fileId, comments || undefined);
     setApprovalComments(prev => ({ ...prev, [fileId]: '' }));
     setSelectedFile(null);
+    // Refresh search results
+    performSearch(searchParams);
   };
 
   const handleReject = (fileId: string) => {
@@ -172,6 +241,8 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     onRejectFile(fileId, reason);
     setRejectionReasons(prev => ({ ...prev, [fileId]: '' }));
     setSelectedFile(null);
+    // Refresh search results
+    performSearch(searchParams);
   };
 
   const updateApprovalComments = (fileId: string, comments: string) => {
@@ -180,13 +251,6 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
 
   const updateRejectionReason = (fileId: string, reason: string) => {
     setRejectionReasons(prev => ({ ...prev, [fileId]: reason }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Close any open details when changing pages
-    setSelectedFile(null);
-    setShowTransactions(null);
   };
 
   const canUpload = userRole === 'maker' || userRole === 'admin';
@@ -291,17 +355,20 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   );
 
   const PaginationControls: React.FC = () => {
+    if (!paginatedData || paginatedData.pagination.totalPages <= 1) return null;
+
+    const { pagination } = paginatedData;
     const getPageNumbers = () => {
       const pages = [];
       const maxVisiblePages = 5;
       
-      if (totalPages <= maxVisiblePages) {
-        for (let i = 1; i <= totalPages; i++) {
+      if (pagination.totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= pagination.totalPages; i++) {
           pages.push(i);
         }
       } else {
-        const start = Math.max(1, currentPage - 2);
-        const end = Math.min(totalPages, start + maxVisiblePages - 1);
+        const start = Math.max(1, pagination.currentPage - 2);
+        const end = Math.min(pagination.totalPages, start + maxVisiblePages - 1);
         
         for (let i = start; i <= end; i++) {
           pages.push(i);
@@ -311,23 +378,21 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
       return pages;
     };
 
-    if (totalPages <= 1) return null;
-
     return (
       <nav aria-label="File pagination">
         <ul className="pagination pagination-sm justify-content-center mb-0">
-          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <li className={`page-item ${!pagination.hasPreviousPage ? 'disabled' : ''}`}>
             <button
               className="page-link"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={!pagination.hasPreviousPage}
             >
               <ChevronLeft size={16} />
             </button>
           </li>
           
           {getPageNumbers().map(page => (
-            <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+            <li key={page} className={`page-item ${pagination.currentPage === page ? 'active' : ''}`}>
               <button
                 className="page-link"
                 onClick={() => handlePageChange(page)}
@@ -337,11 +402,11 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
             </li>
           ))}
           
-          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
             <button
               className="page-link"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={!pagination.hasNextPage}
             >
               <ChevronRight size={16} />
             </button>
@@ -486,7 +551,7 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
       {/* File Approval Queue */}
       <div className="card">
         <div className="card-header bg-white">
-          <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
               <h5 className="card-title mb-1">File Approval Queue</h5>
               <p className="card-text small text-muted mb-0">
@@ -494,32 +559,48 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
               </p>
             </div>
             
-            {/* Filters and Controls */}
-            <div className="d-flex align-items-center gap-3">
-              <div className="d-flex align-items-center gap-2">
-                <label htmlFor="statusFilter" className="form-label small mb-0">Status:</label>
-                <select
-                  id="statusFilter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="form-select form-select-sm"
-                  style={{ width: 'auto' }}
-                >
-                  <option value="all">All</option>
-                  <option value="pending_approval">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="btn btn-outline-primary btn-sm d-flex align-items-center"
+            >
+              <Filter className="me-1" size={16} />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="row g-3 mb-3">
+            <div className="col-md-8">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <Search size={16} />
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by filename, uploader, organization, schedule, or remarks..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => handleSearchChange('')}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
-              
+            </div>
+            <div className="col-md-4">
               <div className="d-flex align-items-center gap-2">
-                <label htmlFor="pageSize" className="form-label small mb-0">Show:</label>
+                <label htmlFor="pageSize" className="form-label small mb-0 text-nowrap">Show:</label>
                 <select
                   id="pageSize"
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  value={searchParams.pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
                   className="form-select form-select-sm"
-                  style={{ width: 'auto' }}
                 >
                   <option value={5}>5</option>
                   <option value={10}>10</option>
@@ -529,25 +610,93 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="row g-3 mb-3 p-3 bg-light rounded">
+              <div className="col-md-3">
+                <label htmlFor="organizationFilter" className="form-label small mb-1">Organization:</label>
+                <select
+                  id="organizationFilter"
+                  value={searchParams.organization || 'all'}
+                  onChange={(e) => handleFilterChange('organization', e.target.value === 'all' ? undefined : e.target.value)}
+                  className="form-select form-select-sm"
+                >
+                  <option value="all">All Organizations</option>
+                  {organizationOptions.map(org => (
+                    <option key={org} value={org}>{org}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="col-md-3">
+                <label htmlFor="scheduleFilter" className="form-label small mb-1">Schedule:</label>
+                <select
+                  id="scheduleFilter"
+                  value={searchParams.schedule || 'all'}
+                  onChange={(e) => handleFilterChange('schedule', e.target.value === 'all' ? undefined : e.target.value)}
+                  className="form-select form-select-sm"
+                >
+                  <option value="all">All Schedules</option>
+                  {scheduleOptions.map(schedule => (
+                    <option key={schedule} value={schedule}>{schedule}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="col-md-3">
+                <label htmlFor="statusFilter" className="form-label small mb-1">Status:</label>
+                <select
+                  id="statusFilter"
+                  value={searchParams.status || 'all'}
+                  onChange={(e) => handleFilterChange('status', e.target.value as any)}
+                  className="form-select form-select-sm"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending_approval">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+              
+              <div className="col-md-3 d-flex align-items-end">
+                <button
+                  onClick={clearFilters}
+                  className="btn btn-outline-secondary btn-sm w-100"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="card-body p-0">
-          {filteredFiles.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-5">
+              <Loader className="text-primary mb-3 spinner-border" size={48} />
+              <h5 className="mb-2">Loading Files...</h5>
+              <p className="text-muted">Please wait while we fetch the results.</p>
+            </div>
+          ) : !paginatedData || paginatedData.data.length === 0 ? (
             <div className="text-center py-5">
               <FileText className="text-muted mb-3" size={48} />
-              <h5 className="mb-2">
-                {statusFilter === 'all' ? 'No Files Uploaded' : `No ${statusFilter.replace('_', ' ')} Files`}
-              </h5>
+              <h5 className="mb-2">No Files Found</h5>
               <p className="text-muted">
-                {statusFilter === 'all' 
-                  ? 'Upload Excel files to begin the reconciliation process.' 
-                  : `No files with ${statusFilter.replace('_', ' ')} status found.`}
+                {searchParams.searchTerm || searchParams.organization !== 'all' || searchParams.schedule !== 'all' || searchParams.status !== 'all'
+                  ? 'No files match your search criteria. Try adjusting your filters.'
+                  : 'Upload Excel files to begin the reconciliation process.'}
               </p>
+              {(searchParams.searchTerm || searchParams.organization !== 'all' || searchParams.schedule !== 'all' || searchParams.status !== 'all') && (
+                <button onClick={clearFilters} className="btn btn-outline-primary btn-sm">
+                  Clear All Filters
+                </button>
+              )}
             </div>
           ) : (
             <>
               <div className="list-group list-group-flush">
-                {currentFiles.map((file) => {
+                {paginatedData.data.map((file) => {
                   const isSelected = selectedFile === file.id;
                   const showingTransactions = showTransactions === file.id;
                   
@@ -740,11 +889,11 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
               </div>
               
               {/* Pagination Footer */}
-              {totalPages > 1 && (
+              {paginatedData && paginatedData.pagination.totalPages > 1 && (
                 <div className="card-footer bg-white border-top">
                   <div className="d-flex justify-content-between align-items-center">
                     <div className="text-muted small">
-                      Showing {startIndex + 1} to {Math.min(endIndex, filteredFiles.length)} of {filteredFiles.length} files
+                      Showing {((paginatedData.pagination.currentPage - 1) * paginatedData.pagination.pageSize) + 1} to {Math.min(paginatedData.pagination.currentPage * paginatedData.pagination.pageSize, paginatedData.pagination.totalItems)} of {paginatedData.pagination.totalItems} files
                     </div>
                     <PaginationControls />
                   </div>
@@ -757,3 +906,12 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
     </div>
   );
 };
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}

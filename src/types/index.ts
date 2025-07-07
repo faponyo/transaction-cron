@@ -49,3 +49,31 @@ export interface User {
 }
 
 export type UserRole = 'maker' | 'checker' | 'admin';
+
+// New interfaces for backend pagination and search
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+}
+
+export interface SearchFilters {
+  organization?: string;
+  schedule?: string;
+  status?: 'all' | 'pending_approval' | 'approved' | 'rejected';
+  searchTerm?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  filters: SearchFilters;
+}
+
+export interface FileUploadSearchParams extends PaginationParams, SearchFilters {}

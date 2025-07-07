@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Transaction, ReconciliationEntry, User, UserRole, FileUpload } from '../types';
+import { Transaction, ReconciliationEntry, User, UserRole, FileUpload, PaginatedResponse, FileUploadSearchParams } from '../types';
 import { mockBankTransactions, mockSystemTransactions, mockReconciliationEntries, mockUsers, mockFileUploads } from '../data/mockData';
 
 export const useReconciliation = () => {
@@ -8,6 +8,70 @@ export const useReconciliation = () => {
   const [reconciliationEntries, setReconciliationEntries] = useState<ReconciliationEntry[]>(mockReconciliationEntries);
   const [fileUploads, setFileUploads] = useState<FileUpload[]>(mockFileUploads);
   const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]);
+
+  // Simulate backend search and pagination
+  const searchFileUploads = useCallback(async (params: FileUploadSearchParams): Promise<PaginatedResponse<FileUpload>> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    let filteredFiles = [...fileUploads];
+
+    // Apply filters
+    if (params.organization && params.organization !== 'all') {
+      filteredFiles = filteredFiles.filter(file => 
+        file.organization?.toLowerCase().includes(params.organization!.toLowerCase())
+      );
+    }
+
+    if (params.schedule && params.schedule !== 'all') {
+      filteredFiles = filteredFiles.filter(file => 
+        file.schedule?.toLowerCase().includes(params.schedule!.toLowerCase())
+      );
+    }
+
+    if (params.status && params.status !== 'all') {
+      filteredFiles = filteredFiles.filter(file => file.status === params.status);
+    }
+
+    if (params.searchTerm && params.searchTerm.trim()) {
+      const searchLower = params.searchTerm.toLowerCase();
+      filteredFiles = filteredFiles.filter(file => 
+        file.fileName.toLowerCase().includes(searchLower) ||
+        file.uploadedBy.toLowerCase().includes(searchLower) ||
+        file.remarks?.toLowerCase().includes(searchLower) ||
+        file.organization?.toLowerCase().includes(searchLower) ||
+        file.schedule?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort by upload date (newest first)
+    filteredFiles.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+
+    // Apply pagination
+    const totalItems = filteredFiles.length;
+    const totalPages = Math.ceil(totalItems / params.pageSize);
+    const startIndex = (params.page - 1) * params.pageSize;
+    const endIndex = startIndex + params.pageSize;
+    const paginatedFiles = filteredFiles.slice(startIndex, endIndex);
+
+    return {
+      data: paginatedFiles,
+      pagination: {
+        currentPage: params.page,
+        pageSize: params.pageSize,
+        totalItems,
+        totalPages,
+        hasNextPage: params.page < totalPages,
+        hasPreviousPage: params.page > 1
+      },
+      filters: {
+        organization: params.organization,
+        schedule: params.schedule,
+        status: params.status,
+        searchTerm: params.searchTerm
+      }
+    };
+  }, [fileUploads]);
 
   const createReconciliation = useCallback((entry: Omit<ReconciliationEntry, 'id' | 'createdAt'>) => {
     const newEntry: ReconciliationEntry = {
@@ -204,5 +268,6 @@ export const useReconciliation = () => {
     rejectFile,
     addIndividualTransaction,
     changeUserRole,
+    searchFileUploads,
   };
 };
