@@ -4,7 +4,7 @@ import { Upload, FileText, Check, X, AlertCircle, Download, ArrowUpRight, ArrowD
 
 interface FileUploadManagerProps {
   fileUploads: FileUpload[];
-  onFileUpload: (file: File, source: 'bank' | 'system') => void;
+  onFileUpload: (file: File, source: 'bank' | 'system', organization: string, schedule: string, remarks?: string) => void;
   onApproveFile: (fileId: string, comments?: string) => void;
   onRejectFile: (fileId: string, reason: string) => void;
   userRole: string;
@@ -19,6 +19,9 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedSource, setSelectedSource] = useState<'bank' | 'system'>('bank');
+  const [selectedOrganization, setSelectedOrganization] = useState('');
+  const [selectedSchedule, setSelectedSchedule] = useState('');
+  const [uploadRemarks, setUploadRemarks] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showTransactions, setShowTransactions] = useState<string | null>(null);
   const [approvalComments, setApprovalComments] = useState<{ [key: string]: string }>({});
@@ -28,6 +31,30 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending_approval' | 'approved' | 'rejected'>('all');
+
+  // Organization options
+  const organizationOptions = [
+    'Head Office',
+    'Branch A',
+    'Branch B',
+    'Branch C',
+    'Regional Office North',
+    'Regional Office South',
+    'Corporate Division',
+    'Operations Division'
+  ];
+
+  // Schedule options
+  const scheduleOptions = [
+    'Daily',
+    'Weekly',
+    'Monthly',
+    'Quarterly',
+    'Ad-hoc',
+    'End of Day',
+    'End of Month',
+    'Real-time'
+  ];
 
   // Filter and paginate files
   const filteredFiles = useMemo(() => {
@@ -68,9 +95,19 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
   };
 
   const handleFileUpload = (file: File) => {
+    if (!selectedOrganization || !selectedSchedule) {
+      alert('Please select both organization and schedule before uploading');
+      return;
+    }
+
     if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
         file.type === 'application/vnd.ms-excel') {
-      onFileUpload(file, selectedSource);
+      onFileUpload(file, selectedSource, selectedOrganization, selectedSchedule, uploadRemarks || undefined);
+      
+      // Reset form after successful upload
+      setSelectedOrganization('');
+      setSelectedSchedule('');
+      setUploadRemarks('');
     } else {
       alert('Please upload only Excel files (.xlsx or .xls)');
     }
@@ -323,35 +360,87 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
             <h5 className="card-title mb-0">Upload Transaction File</h5>
           </div>
           <div className="card-body">
-            <div className="mb-3">
-              <label className="form-label fw-medium">Transaction Source</label>
-              <div className="d-flex gap-3">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    value="bank"
-                    checked={selectedSource === 'bank'}
-                    onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
-                    id="source-bank"
-                  />
-                  <label className="form-check-label" htmlFor="source-bank">
-                    Bank Transactions
-                  </label>
+            <div className="row g-3 mb-4">
+              <div className="col-md-6">
+                <label className="form-label fw-medium">Transaction Source *</label>
+                <div className="d-flex gap-3">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      value="bank"
+                      checked={selectedSource === 'bank'}
+                      onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
+                      id="source-bank"
+                    />
+                    <label className="form-check-label" htmlFor="source-bank">
+                      Bank Transactions
+                    </label>
+                  </div>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      value="system"
+                      checked={selectedSource === 'system'}
+                      onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
+                      id="source-system"
+                    />
+                    <label className="form-check-label" htmlFor="source-system">
+                      System Transactions
+                    </label>
+                  </div>
                 </div>
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    value="system"
-                    checked={selectedSource === 'system'}
-                    onChange={(e) => setSelectedSource(e.target.value as 'bank' | 'system')}
-                    id="source-system"
-                  />
-                  <label className="form-check-label" htmlFor="source-system">
-                    System Transactions
-                  </label>
-                </div>
+              </div>
+
+              <div className="col-md-6">
+                <label htmlFor="organization" className="form-label fw-medium">
+                  Organization *
+                </label>
+                <select
+                  id="organization"
+                  value={selectedOrganization}
+                  onChange={(e) => setSelectedOrganization(e.target.value)}
+                  className="form-select"
+                  required
+                >
+                  <option value="">Select Organization</option>
+                  {organizationOptions.map(org => (
+                    <option key={org} value={org}>{org}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label htmlFor="schedule" className="form-label fw-medium">
+                  Schedule *
+                </label>
+                <select
+                  id="schedule"
+                  value={selectedSchedule}
+                  onChange={(e) => setSelectedSchedule(e.target.value)}
+                  className="form-select"
+                  required
+                >
+                  <option value="">Select Schedule</option>
+                  {scheduleOptions.map(schedule => (
+                    <option key={schedule} value={schedule}>{schedule}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label htmlFor="uploadRemarks" className="form-label fw-medium">
+                  Remarks (Optional)
+                </label>
+                <textarea
+                  id="uploadRemarks"
+                  value={uploadRemarks}
+                  onChange={(e) => setUploadRemarks(e.target.value)}
+                  rows={3}
+                  className="form-control"
+                  placeholder="Add any additional notes or comments about this upload..."
+                />
               </div>
             </div>
 
@@ -476,7 +565,7 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
                           <div>
                             <h6 className="mb-1 fw-medium">{file.fileName}</h6>
                             <p className="mb-0 small text-muted">
-                              {file.transactionCount} transactions • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
+                              {file.transactionCount} transactions • {file.organization} • {file.schedule} • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -562,11 +651,22 @@ export const FileUploadManager: React.FC<FileUploadManagerProps> = ({
                                 <h6 className="fw-medium mb-2">File Details</h6>
                                 <div className="small">
                                   <p className="mb-1"><span className="fw-medium">Source:</span> {file.source === 'bank' ? 'Bank' : 'System'}</p>
+                                  <p className="mb-1"><span className="fw-medium">Organization:</span> {file.organization}</p>
+                                  <p className="mb-1"><span className="fw-medium">Schedule:</span> {file.schedule}</p>
                                   <p className="mb-1"><span className="fw-medium">Transactions:</span> {file.transactionCount}</p>
                                   <p className="mb-0"><span className="fw-medium">Uploaded:</span> {new Date(file.uploadedAt).toLocaleString()}</p>
                                 </div>
                               </div>
                             </div>
+
+                            {file.remarks && (
+                              <div className="col-md-8">
+                                <div className="p-3 bg-light rounded">
+                                  <h6 className="fw-medium mb-2">Upload Remarks</h6>
+                                  <p className="mb-0 small">{file.remarks}</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Approval Form - Always show for pending files when user can approve */}

@@ -81,7 +81,7 @@ export const useReconciliation = () => {
     }
   }, [currentUser.name, reconciliationEntries]);
 
-  const handleFileUpload = useCallback((file: File, source: 'bank' | 'system') => {
+  const handleFileUpload = useCallback((file: File, source: 'bank' | 'system', organization: string, schedule: string, remarks?: string) => {
     // Generate mock transactions for the uploaded file
     const generateMockTransactions = (count: number): Transaction[] => {
       const transactions: Transaction[] = [];
@@ -119,7 +119,10 @@ export const useReconciliation = () => {
       status: 'pending_approval',
       transactionCount,
       source,
-      transactions: mockTransactions
+      transactions: mockTransactions,
+      organization,
+      schedule,
+      remarks
     };
 
     setFileUploads(prev => [...prev, newFileUpload]);

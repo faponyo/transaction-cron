@@ -154,7 +154,10 @@ export const mockFileUploads: FileUpload[] = [
     status: 'pending_approval',
     transactionCount: 8,
     source: 'bank',
-    transactions: generateMockTransactions('bank', 8, 'file-1')
+    transactions: generateMockTransactions('bank', 8, 'file-1'),
+    organization: 'Head Office',
+    schedule: 'Daily',
+    remarks: 'Regular daily bank statement upload for January 2024'
   },
   {
     id: 'file-2',
@@ -166,7 +169,10 @@ export const mockFileUploads: FileUpload[] = [
     approvedAt: '2024-01-18T10:00:00Z',
     transactionCount: 6,
     source: 'system',
-    transactions: generateMockTransactions('system', 6, 'file-2')
+    transactions: generateMockTransactions('system', 6, 'file-2'),
+    organization: 'Branch A',
+    schedule: 'Weekly',
+    remarks: 'Weekly system transaction export for reconciliation'
   },
   {
     id: 'file-3',
@@ -179,6 +185,9 @@ export const mockFileUploads: FileUpload[] = [
     approvedAt: '2024-01-19T16:45:00Z',
     transactionCount: 12,
     source: 'bank',
-    transactions: generateMockTransactions('bank', 12, 'file-3')
+    transactions: generateMockTransactions('bank', 12, 'file-3'),
+    organization: 'Regional Office North',
+    schedule: 'Monthly',
+    remarks: 'February month-end bank statement with corrections needed'
   }
 ];

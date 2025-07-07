@@ -36,6 +36,9 @@ export interface FileUpload {
   transactionCount: number;
   source: 'bank' | 'system';
   transactions: Transaction[];
+  organization?: string;
+  schedule?: string;
+  remarks?: string;
 }
 
 export interface User {
